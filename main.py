@@ -11,11 +11,14 @@ import random
 # For Reproducibility
 random.seed(1337)
 
-sealionList= os.listdir("D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\sealion\\Images\\")
-forkLiftList= os.listdir("D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\forklift\\Images\\")
+sealionPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\sealion\\Images\\"
+forkLiftPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\forklift\\Images\\"
 
-sealionImg = image.imread("D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\sealion\\Images\\" + sealionList[random.randrange(0,len(sealionList))]) #sealion
-forkLiftImg = image.imread("D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\forklift\\Images\\" + forkLiftList[random.randrange(0,len(forkLiftList))]) #forklift
+sealionList= os.listdir(sealionPath)
+forkLiftList= os.listdir(forkLiftPath)
+
+sealionImg = image.imread(sealionPath + sealionList[random.randrange(0,len(sealionList))])
+forkLiftImg = image.imread(forkLiftPath + forkLiftList[random.randrange(0,len(forkLiftList))])
 sealionImgPreprocessed = preprocess(mx.nd.array(sealionImg))
 forkLiftImgPreprocessed = preprocess(mx.nd.array(forkLiftImg))
 
@@ -24,4 +27,4 @@ img = sealionImg
 preprocessed = preprocess(mx.nd.array(img))
 result_label_index = process(preprocessed)
 print("Result Class: " + str(result_label_index) + " " + labelDict[result_label_index])
-boundaryAttack = BoundaryAttack(preprocessed, forkLiftImgPreprocessed)
+boundaryAttack = BoundaryAttack(preprocessed, forkLiftImgPreprocessed, process)
