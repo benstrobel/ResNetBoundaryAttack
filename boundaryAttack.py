@@ -16,28 +16,34 @@ def dist(ndarray):
 class BoundaryAttack:
 
     def __init__(self, original_img=None, target_img=None, evaluate=None):
-        if original_img is None and target_img is None and evaluate is None:
-            raise NotImplementedError("Not Implemented yet, pass Original Image, Target Image and evaluate function")
-        elif original_img is None != target_img is None != evaluate is None:
-            raise AttributeError(
-                "You need to pass original, target image and evaluate function to use targeted or neither to use "
-                "untargeted mode")
-        else:
+        self.alpha = 0.1
+        self.beta = 0.1
+        self.firstStepSuccess = []
+        self.secondStepSuccess = []
+        self.successProbabilityAfterStep1 = -1
+        self.successProbabilityAfterStep2 = -1
+        self.stepCounter = 0
+        if original_img is not None and target_img is None and evaluate is not None:        # Untargeted Mode
+            self.orig_img = original_img
+            self.delta = mx.ndarray.random.uniform(-1, 1, original_img.shape)
+            self.eval = evaluate
+            self.orig_class = self.eval(original_img)
+            self.target_class = self.eval(target_img)
+            self.criteriaFct = lambda: self.eval(original_img + self.delta) != self.orig_class
+        elif original_img is not None and target_img is not None and evaluate is not None:  # Targeted Mode
             self.orig_img = original_img
             self.delta = target_img - original_img
             self.eval = evaluate
             self.orig_class = self.eval(original_img)
             self.target_class = self.eval(target_img)
-            self.alpha = 0.1
-            self.beta = 0.1
-            self.firstStepSuccess = []
-            self.secondStepSuccess = []
-            self.successProbabilityAfterStep1 = -1
-            self.successProbabilityAfterStep2 = -1
-            self.stepCounter = 0
-            sanity = self.eval(original_img+self.delta)
-            if sanity != self.target_class:
-                print("Sanity Check failed: Is: " + str(sanity) + " Should: " + str(self.orig_class))
+            self.criteriaFct = lambda: self.eval(original_img + self.delta) == self.target_class
+        else:
+            raise AttributeError(
+                "You need to pass original, target image and evaluate function to use targeted or just original and "
+                "evalute to use untargeted mode")
+
+        if not self.criteriaFct():
+            print("Sanity Check failed")
         return
 
     def step(self):
@@ -46,15 +52,14 @@ class BoundaryAttack:
         previousDelta = self.delta
         distance = dist(self.delta)
         self.__firstPartStep()
-        current_class = self.eval(self.orig_img + self.delta)
-        if current_class == self.target_class:
+        if self.criteriaFct():
             self.__secondPartStep()
             new_distance = dist(self.delta)
             if new_distance > distance:
                 self.delta = previousDelta
                 return
             firstStepSuc = True
-            secondStepSuc = self.eval(self.orig_img + self.delta) == self.target_class
+            secondStepSuc = self.criteriaFct()
         else:
             firstStepSuc = False
             self.delta = previousDelta
@@ -71,15 +76,14 @@ class BoundaryAttack:
         return
 
     def __firstPartStep(self):
-        randomarray = mx.ndarray.random.uniform(-1, 1, self.orig_img.shape)
-        a = crossProduct(randomarray, self.delta)
-        orth_perturbation = normalize(a)
+        random_array = mx.ndarray.random.uniform(-1, 1, self.orig_img.shape)
+        orth_perturbation = normalize(crossProduct(random_array, self.delta))
         self.delta = self.delta + orth_perturbation * self.alpha * np.random.normal()
         self.cutUnderAndOverflow()
         return
 
     def __secondPartStep(self):
-        self.delta = self.delta + normalize(-self.delta) * self.beta * np.random.normal()  # Random Number from
+        self.delta = self.delta + normalize(-self.delta) * self.beta * np.random.normal()
         self.cutUnderAndOverflow()
         return
 
