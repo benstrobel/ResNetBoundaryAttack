@@ -76,7 +76,7 @@ class BoundaryAttack:
         return
 
     def __firstPartStep(self):
-        random_array = mx.ndarray.random.uniform(-1, 1, self.orig_img.shape)
+        random_array = mx.ndarray.random.uniform(0, 1, self.orig_img.shape)
         orth_perturbation = normalize(crossProduct(random_array, self.delta))
         self.delta = self.delta + orth_perturbation * self.alpha * np.random.normal()
         self.cutUnderAndOverflow()

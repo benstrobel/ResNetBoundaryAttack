@@ -33,7 +33,7 @@ std_b = mx.nd.full((1,224,224), 0.225)
 std = mx.nd.concat(std_r,std_g,std_b,dim=0)
 
 # For Reproducibility
-#random.seed(1337)
+random.seed(1337)
 
 sealionPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\sealion\\Images\\"
 forkLiftPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\forklift\\Images\\"
@@ -60,9 +60,11 @@ convergence_limit = 0.0001
 render_as_image(preprocessed[0]*std + mean)
 render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
 
-while boundaryAttack.getCurrentStep() < 100 and below_convergence_limit_counter < 10:
+while boundaryAttack.getCurrentStep() < 500 and below_convergence_limit_counter < 10:
     boundaryAttack.step()
     if boundaryAttack.getCurrentAlpja() < convergence_limit:
         below_convergence_limit_counter = below_convergence_limit_counter + 1
+    else:
+        below_convergence_limit_counter = 0
 
 render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
