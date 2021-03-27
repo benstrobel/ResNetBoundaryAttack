@@ -9,6 +9,9 @@ def normalize(ndarray):
     norm = mx.nd.norm(ndarray)
     return mx.nd.divide(ndarray,norm)
 
+def dist(ndarray):
+    return mx.nd.norm(ndarray).asnumpy()[0]
+
 
 class BoundaryAttack:
 
@@ -38,23 +41,28 @@ class BoundaryAttack:
         return
 
     def step(self):
+        firstStepSuc = None
+        secondStepSuc = None
         previousDelta = self.delta
-        distance = mx.nd.norm(self.delta).asnumpy()[0]
+        distance = dist(self.delta)
         self.__firstPartStep()
         current_class = self.eval(self.orig_img + self.delta)
         if current_class == self.target_class:
             self.__secondPartStep()
-            new_distance = mx.nd.norm(self.delta).asnumpy()[0]
+            new_distance = dist(self.delta)
             if new_distance > distance:
                 self.delta = previousDelta
                 return
-            self.firstStepSuccess.append(True)
-            self.secondStepSuccess.append(self.eval(self.orig_img + self.delta) == self.target_class)
+            firstStepSuc = True
+            secondStepSuc = self.eval(self.orig_img + self.delta) == self.target_class
         else:
-            self.firstStepSuccess.append(False)
+            firstStepSuc = False
             self.delta = previousDelta
+            new_distance = dist(self.delta)
+        self.firstStepSuccess.append(firstStepSuc)
+        self.secondStepSuccess.append(secondStepSuc)
         self.__tuneHyperParameter()
-        print("Step " + str(self.stepCounter) + " complete Alpha: " + str(self.alpha) + " Beta: " + str(self.beta) + " 1stSucc: " + str(self.successProbabilityAfterStep1) + " 2ndSucc: " + str(self.successProbabilityAfterStep2) + " Distance: " + str(mx.nd.norm(self.delta).asnumpy()[0]))
+        print("Step " + str(self.stepCounter) + " complete (" + str(firstStepSuc) + "," + str(secondStepSuc) + ") Alpha: " + str(self.alpha) + " Beta: " + str(self.beta) + " 1stSucc: " + str(self.successProbabilityAfterStep1) + " 2ndSucc: " + str(self.successProbabilityAfterStep2) + " Distance: " + str(new_distance))
         self.stepCounter = self.stepCounter+1
         return
 
@@ -68,7 +76,6 @@ class BoundaryAttack:
 
     def __secondPartStep(self):
         self.delta = self.delta + normalize(-self.delta) * self.beta * np.random.normal()  # Random Number from
-        # Gaussian Distribution
         self.cutUnderAndOverflow()
         return
 
@@ -103,7 +110,7 @@ class BoundaryAttack:
     def cutUnderAndOverflow(self):
         min_diff = mx.nd.broadcast_minimum(self.orig_img + self.delta, mx.nd.full(self.orig_img.shape, 0))
         self.delta = self.delta - min_diff
-        max_diff = mx.nd.broadcast_maximum(self.orig_img + self.delta - mx.nd.full(self.orig_img.shape, 255),
+        max_diff = mx.nd.broadcast_maximum(self.orig_img + self.delta - mx.nd.full(self.orig_img.shape, 1),
                                            mx.nd.full(self.orig_img.shape, 0))
         self.delta = self.delta - max_diff
         return
@@ -116,3 +123,6 @@ class BoundaryAttack:
 
     def getCurrentStep(self):
         return self.stepCounter
+
+    def getCurrentAlpja(self):
+        return self.alpha

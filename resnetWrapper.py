@@ -14,14 +14,15 @@ retrieve the definition of its inputs and outputs.
 
 import os
 import onnxruntime as rt
+import numpy as np
 from mxnet.gluon.data.vision import transforms
 from onnxruntime.datasets import get_example
+from PIL import Image
 
 # The 'preprocess' method originated from https://github.com/onnx/onnx
 def preprocess(img):
     '''
     Preprocessing required on the images for inference with mxnet gluon
-    The function takes path to an image and returns processed tensor
     '''
     transform_fn = transforms.Compose([
         transforms.Resize(224),
@@ -33,6 +34,23 @@ def preprocess(img):
     img = img.expand_dims(axis=0)  # batchify
 
     return img
+
+def to_shape(img):
+    transform_fn = transforms.Compose([
+        transforms.Resize(224),
+        transforms.CenterCrop(224),
+        transforms.ToTensor()
+    ])
+    img = transform_fn(img)
+    img = img.expand_dims(axis=0)  # batchify
+
+    return img
+
+def back_to_img(ndarray):
+    array = np.moveaxis(ndarray[0].asnumpy(), 0, 2)
+    array = np.multiply(array, 255)
+    print(array.shape)
+    return Image.fromarray(array, 'RGB')
 
 def process(preprocessed_img):
 
