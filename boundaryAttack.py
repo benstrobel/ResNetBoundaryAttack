@@ -62,7 +62,11 @@ class BoundaryAttack:
         self.firstStepSuccess.append(firstStepSuc)
         self.secondStepSuccess.append(secondStepSuc)
         self.__tuneHyperParameter()
-        print("Step " + str(self.stepCounter) + " complete (" + str(firstStepSuc) + "," + str(secondStepSuc) + ") Alpha: " + str(self.alpha) + " Beta: " + str(self.beta) + " 1stSucc: " + str(self.successProbabilityAfterStep1) + " 2ndSucc: " + str(self.successProbabilityAfterStep2) + " Distance: " + str(new_distance))
+        print("Step " + str('{:<3}'.format(self.stepCounter)) + " complete (" + str(firstStepSuc)[0] + ","
+              + str(secondStepSuc)[0] + ") Alpha: " + str('{:<25}'.format(self.alpha)) + " Beta: "
+              + str('{:<25}'.format(self.beta)) + " 1stSuccProb: "
+              + str('{:<4}'.format(self.successProbabilityAfterStep1*100)) + "% 2ndSuccProb: "
+              + str('{:<4}'.format(self.successProbabilityAfterStep2*100)) + "% L2Distance: " + str(new_distance))
         self.stepCounter = self.stepCounter+1
         return
 
@@ -80,30 +84,41 @@ class BoundaryAttack:
         return
 
     def __tuneHyperParameter(self):
-        # Calculating the respective the success rate
+        firstStepSuccChanged = False
+        secondStepSuccChanged = False
+
+        # Making sure only the last 10 Steps are getting taken into account for the success rates
+
         if len(self.firstStepSuccess) > 10:
             self.firstStepSuccess = self.firstStepSuccess[1:]
+            firstStepSuccChanged = True
         if len(self.secondStepSuccess) > 10:
             self.secondStepSuccess = self.secondStepSuccess[1:]
+            secondStepSuccChanged = True
+
+        # Enable Hyperparemeter Tuning Within the First Ten Iterations
         if len(self.firstStepSuccess) < 10:
-            return
-
-        self.successProbabilityAfterStep1 = self.firstStepSuccess.count(True) / 10
-
-        if abs(self.successProbabilityAfterStep1 - 0.5) > 0.15:
-            if self.successProbabilityAfterStep1 == 0:
-                self.successProbabilityAfterStep1 = 0.01
-            self.alpha = self.alpha * (self.successProbabilityAfterStep1 / 0.5)
-
+            firstStepSuccChanged = True
         if len(self.secondStepSuccess) < 10:
-            return
+            secondStepSuccChanged = True
 
-        self.successProbabilityAfterStep2 = self.secondStepSuccess.count(True) / 10
+        # Calculating the respective the success rates and applying hyperparameter adjustments
 
-        if abs(self.successProbabilityAfterStep2 - 0.5) > 0.15:
-            if self.successProbabilityAfterStep2 == 0:
-                self.successProbabilityAfterStep2 = 0.01
-            self.beta = self.beta * (self.successProbabilityAfterStep2 / 0.5)
+        self.successProbabilityAfterStep1 = self.firstStepSuccess.count(True) / len(self.firstStepSuccess)
+
+        if firstStepSuccChanged:
+            if abs(self.successProbabilityAfterStep1 - 0.5) > 0.15:
+                if self.successProbabilityAfterStep1 == 0:
+                    self.successProbabilityAfterStep1 = 0.01
+                self.alpha = self.alpha * (self.successProbabilityAfterStep1 / 0.5)
+
+        self.successProbabilityAfterStep2 = self.secondStepSuccess.count(True) / len(self.firstStepSuccess)
+
+        if secondStepSuccChanged:
+            if abs(self.successProbabilityAfterStep2 - 0.5) > 0.15:
+                if self.successProbabilityAfterStep2 == 0:
+                    self.successProbabilityAfterStep2 = 0.01
+                self.beta = self.beta * (self.successProbabilityAfterStep2 / 0.5)
 
         return
 

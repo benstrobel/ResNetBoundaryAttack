@@ -49,11 +49,6 @@ forkLiftImgPreprocessed = preprocess(mx.nd.array(forkLiftImg))
 img = sealionImg
 
 preprocessed = preprocess(mx.nd.array(img))
-testimg = preprocess(mx.nd.array(img))[0]
-render_as_image(testimg)
-
-testimg2 = to_shape(mx.nd.array(img))[0]
-render_as_image(testimg2)
 
 result_label_index = process(preprocessed)
 print("Result Class: " + str(result_label_index) + " " + labelDict[result_label_index])
@@ -62,7 +57,7 @@ boundaryAttack = BoundaryAttack(preprocessed, forkLiftImgPreprocessed, process)
 below_convergence_limit_counter = 0
 convergence_limit = 0.0001
 
-render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
+#render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
 
 while boundaryAttack.getCurrentStep() < 100 and below_convergence_limit_counter < 10:
     boundaryAttack.step()
