@@ -28,3 +28,6 @@ preprocessed = preprocess(mx.nd.array(img))
 result_label_index = process(preprocessed)
 print("Result Class: " + str(result_label_index) + " " + labelDict[result_label_index])
 boundaryAttack = BoundaryAttack(preprocessed, forkLiftImgPreprocessed, process)
+
+while boundaryAttack.getCurrentStep() < 100:
+    boundaryAttack.step()
