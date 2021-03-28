@@ -51,7 +51,11 @@ preprocessed = resnet.preprocess(mx.nd.array(img))
 
 result_label_index = resnet.process(preprocessed)
 print("Result Class: " + str(result_label_index) + " " + labelDict[result_label_index])
-boundaryAttack = BoundaryAttack(preprocessed, forkLiftImgPreprocessed, resnet.process)
+
+#Replace forkLiftImgPreprocessed with None to use untargeted mode
+boundaryAttack = BoundaryAttack(preprocessed, None, resnet.process)
+if boundaryAttack.target_class is not None:
+    print("Target Class: " + str(boundaryAttack.target_class) + " " + labelDict[boundaryAttack.target_class])
 
 below_convergence_limit_counter = 0
 convergence_limit = 0.001
@@ -60,11 +64,15 @@ render_as_image(preprocessed[0]*std + mean)
 render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
 
 distance_list = []
+alpha_list = []
+beta_list = []
 
-while boundaryAttack.getCurrentStep() < 1000 and below_convergence_limit_counter < 5:
+while boundaryAttack.getCurrentStep() < 400 and below_convergence_limit_counter < 5:
     boundaryAttack.step()
     distance_list.append(boundaryAttack.getCurrentDist())
-    if boundaryAttack.getCurrentAlpja() < convergence_limit:
+    alpha_list.append(boundaryAttack.getCurrentAlpha())
+    beta_list.append(boundaryAttack.getCurrentBeta())
+    if boundaryAttack.getCurrentAlpha() < convergence_limit:
         below_convergence_limit_counter = below_convergence_limit_counter + 1
     else:
         below_convergence_limit_counter = 0
@@ -73,5 +81,15 @@ render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
 print("Finished Adversarial Sample within " + str(boundaryAttack.stepCounter) + " Steps and " + str(resnet.forward_counter) + " Forward Passes.")
 pyplot.plot(distance_list)
 pyplot.ylabel("L2-Distance")
+pyplot.xlabel("Step")
+pyplot.show()
+
+pyplot.plot(alpha_list)
+pyplot.ylabel("Alpha")
+pyplot.xlabel("Step")
+pyplot.show()
+
+pyplot.plot(beta_list)
+pyplot.ylabel("Beta")
 pyplot.xlabel("Step")
 pyplot.show()

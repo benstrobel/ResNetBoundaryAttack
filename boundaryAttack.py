@@ -30,6 +30,7 @@ class BoundaryAttack:
             self.orig_class = self.eval(original_img)
             self.delta = None
             self.criteriaFct = lambda: self.eval(original_img + self.delta) != self.orig_class
+            self.target_class = None
             while self.delta is None or not self.criteriaFct():
                 self.delta = mx.ndarray.random.uniform(0, 1, original_img.shape)
             print("Found starting deviation")
@@ -78,7 +79,7 @@ class BoundaryAttack:
               + str(secondStepSuc)[0] + ") Alpha: " + str('{:<25}'.format(self.alpha)) + " Beta: "
               + str('{:<25}'.format(self.beta)) + " 1stSuccProb: "
               + str('{:<4}'.format(self.successProbabilityAfterStep1*100)) + "% 2ndSuccProb: "
-              + str('{:<4}'.format(self.successProbabilityAfterStep2*100)) + "% L2Distance: " + str(new_distance) + " Prev Distance: " + str(distance))
+              + str('{:<4}'.format(self.successProbabilityAfterStep2*100)) + "% L2Distance: " + str(new_distance))
         self.stepCounter = self.stepCounter+1
         return
 
@@ -150,8 +151,11 @@ class BoundaryAttack:
     def getCurrentStep(self):
         return self.stepCounter
 
-    def getCurrentAlpja(self):
+    def getCurrentAlpha(self):
         return self.alpha
+
+    def getCurrentBeta(self):
+        return self.beta
 
     def getCurrentDist(self):
         return dist(self.delta)
