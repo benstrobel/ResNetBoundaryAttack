@@ -64,18 +64,21 @@ class BoundaryAttack:
                 return
             firstStepSuc = True
             secondStepSuc = self.criteriaFct()
+            if not secondStepSuc:
+                self.delta = previousDelta
         else:
             firstStepSuc = False
             self.delta = previousDelta
-            new_distance = dist(self.delta)
+            new_distance = distance
         self.firstStepSuccess.append(firstStepSuc)
-        self.secondStepSuccess.append(secondStepSuc)
+        if secondStepSuc is not None:
+            self.secondStepSuccess.append(secondStepSuc)
         self.__tuneHyperParameter()
         print("Step " + str('{:<3}'.format(self.stepCounter)) + " complete (" + str(firstStepSuc)[0] + ","
               + str(secondStepSuc)[0] + ") Alpha: " + str('{:<25}'.format(self.alpha)) + " Beta: "
               + str('{:<25}'.format(self.beta)) + " 1stSuccProb: "
               + str('{:<4}'.format(self.successProbabilityAfterStep1*100)) + "% 2ndSuccProb: "
-              + str('{:<4}'.format(self.successProbabilityAfterStep2*100)) + "% L2Distance: " + str(new_distance))
+              + str('{:<4}'.format(self.successProbabilityAfterStep2*100)) + "% L2Distance: " + str(new_distance) + " Prev Distance: " + str(distance))
         self.stepCounter = self.stepCounter+1
         return
 
@@ -97,37 +100,36 @@ class BoundaryAttack:
         secondStepSuccChanged = False
 
         # Making sure only the last 10 Steps are getting taken into account for the success rates
+        list_max_elements = 10
 
-        if len(self.firstStepSuccess) > 10:
+        if len(self.firstStepSuccess) > list_max_elements:
             self.firstStepSuccess = self.firstStepSuccess[1:]
             firstStepSuccChanged = True
-        if len(self.secondStepSuccess) > 10:
+        if len(self.secondStepSuccess) > list_max_elements:
             self.secondStepSuccess = self.secondStepSuccess[1:]
             secondStepSuccChanged = True
 
         # Enable Hyperparemeter Tuning Within the First Ten Iterations
-        if len(self.firstStepSuccess) < 10:
+        if len(self.firstStepSuccess) < list_max_elements:
             firstStepSuccChanged = True
-        if len(self.secondStepSuccess) < 10:
+        if len(self.secondStepSuccess) < list_max_elements:
             secondStepSuccChanged = True
 
-        # Calculating the respective the success rates and applying hyperparameter adjustments
+        # Calculating the respective success rates and applying hyperparameter adjustments
 
         self.successProbabilityAfterStep1 = self.firstStepSuccess.count(True) / len(self.firstStepSuccess)
 
         if firstStepSuccChanged:
-            if abs(self.successProbabilityAfterStep1 - 0.5) > 0.15:
-                if self.successProbabilityAfterStep1 == 0:
-                    self.successProbabilityAfterStep1 = 0.01
-                self.alpha = self.alpha * (self.successProbabilityAfterStep1 / 0.5)
+            # Restricting by how much alpha can change within one adjustment
+            successProbabilityAfterStep1 = min(max(self.successProbabilityAfterStep1,0.35),0.65)
+            self.alpha = self.alpha * (successProbabilityAfterStep1 / 0.5)
 
         self.successProbabilityAfterStep2 = self.secondStepSuccess.count(True) / len(self.firstStepSuccess)
 
         if secondStepSuccChanged:
-            if abs(self.successProbabilityAfterStep2 - 0.5) > 0.15:
-                if self.successProbabilityAfterStep2 == 0:
-                    self.successProbabilityAfterStep2 = 0.01
-                self.beta = self.beta * (self.successProbabilityAfterStep2 / 0.5)
+            # Restricting by how much beta can change within one adjustment
+            successProbabilityAfterStep2 = min(max(self.successProbabilityAfterStep2,0.35),0.65)
+            self.beta = self.beta * (successProbabilityAfterStep2 / 0.5)
 
         return
 

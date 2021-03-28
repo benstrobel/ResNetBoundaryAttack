@@ -1,7 +1,4 @@
-from resnetWrapper import preprocess
-from resnetWrapper import process
-from resnetWrapper import back_to_img
-from resnetWrapper import to_shape
+from resnetWrapper import ResNet
 from imageNetLabelDict import labelDict
 from boundaryAttack import BoundaryAttack
 import mxnet as mx
@@ -33,7 +30,7 @@ std_b = mx.nd.full((1,224,224), 0.225)
 std = mx.nd.concat(std_r,std_g,std_b,dim=0)
 
 # For Reproducibility
-#random.seed(1337)
+random.seed(1337)
 
 sealionPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\sealion\\Images\\"
 forkLiftPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\forklift\\Images\\"
@@ -41,26 +38,28 @@ forkLiftPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\forklift
 sealionList= os.listdir(sealionPath)
 forkLiftList= os.listdir(forkLiftPath)
 
+resnet = ResNet()
+
 sealionImg = image.imread(sealionPath + sealionList[random.randrange(0, len(sealionList))])
 forkLiftImg = image.imread(forkLiftPath + forkLiftList[random.randrange(0, len(forkLiftList))])
-sealionImgPreprocessed = preprocess(mx.nd.array(sealionImg))
-forkLiftImgPreprocessed = preprocess(mx.nd.array(forkLiftImg))
+sealionImgPreprocessed = resnet.preprocess(mx.nd.array(sealionImg))
+forkLiftImgPreprocessed = resnet.preprocess(mx.nd.array(forkLiftImg))
 
 img = sealionImg
 
-preprocessed = preprocess(mx.nd.array(img))
+preprocessed = resnet.preprocess(mx.nd.array(img))
 
-result_label_index = process(preprocessed)
+result_label_index = resnet.process(preprocessed)
 print("Result Class: " + str(result_label_index) + " " + labelDict[result_label_index])
-boundaryAttack = BoundaryAttack(preprocessed, forkLiftImgPreprocessed, process)
+boundaryAttack = BoundaryAttack(preprocessed, forkLiftImgPreprocessed, resnet.process)
 
 below_convergence_limit_counter = 0
-convergence_limit = 0.0001
+convergence_limit = 0.001
 
 render_as_image(preprocessed[0]*std + mean)
 render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
 
-while boundaryAttack.getCurrentStep() < 500 and below_convergence_limit_counter < 10:
+while boundaryAttack.getCurrentStep() < 500 and below_convergence_limit_counter < 5:
     boundaryAttack.step()
     if boundaryAttack.getCurrentAlpja() < convergence_limit:
         below_convergence_limit_counter = below_convergence_limit_counter + 1
@@ -68,3 +67,4 @@ while boundaryAttack.getCurrentStep() < 500 and below_convergence_limit_counter 
         below_convergence_limit_counter = 0
 
 render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
+print("Finished Adversarial Sample within " + boundaryAttack.stepCounter + " Steps and " + resnet.forward_counter + " Forward Passes.")
