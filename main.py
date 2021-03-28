@@ -33,7 +33,7 @@ std_b = mx.nd.full((1,224,224), 0.225)
 std = mx.nd.concat(std_r,std_g,std_b,dim=0)
 
 # For Reproducibility
-random.seed(1337)
+#random.seed(1337)
 
 sealionPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\sealion\\Images\\"
 forkLiftPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\forklift\\Images\\"

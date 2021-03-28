@@ -24,13 +24,17 @@ class BoundaryAttack:
         self.successProbabilityAfterStep2 = -1
         self.stepCounter = 0
         if original_img is not None and target_img is None and evaluate is not None:        # Untargeted Mode
+            print("Untargeted Mode")
             self.orig_img = original_img
-            self.delta = mx.ndarray.random.uniform(-1, 1, original_img.shape)
             self.eval = evaluate
             self.orig_class = self.eval(original_img)
-            self.target_class = self.eval(target_img)
+            self.delta = None
             self.criteriaFct = lambda: self.eval(original_img + self.delta) != self.orig_class
+            while self.delta is None or not self.criteriaFct():
+                self.delta = mx.ndarray.random.uniform(0, 1, original_img.shape)
+            print("Found starting deviation")
         elif original_img is not None and target_img is not None and evaluate is not None:  # Targeted Mode
+            print("Targeted Mode")
             self.orig_img = original_img
             self.delta = target_img - original_img
             self.eval = evaluate
@@ -76,15 +80,16 @@ class BoundaryAttack:
         return
 
     def __firstPartStep(self):
-        random_array = mx.ndarray.random.uniform(0, 1, self.orig_img.shape)
+        random_array = mx.ndarray.random.uniform(-1, 1, self.orig_img.shape)
         orth_perturbation = normalize(crossProduct(random_array, self.delta))
-        self.delta = self.delta + orth_perturbation * self.alpha * np.random.normal()
-        self.cutUnderAndOverflow()
+        first_step = orth_perturbation * self.alpha * np.random.normal()
+        self.delta = self.delta + first_step
+        #self.cutUnderAndOverflow()
         return
 
     def __secondPartStep(self):
         self.delta = self.delta + normalize(-self.delta) * self.beta * np.random.normal()
-        self.cutUnderAndOverflow()
+        #self.cutUnderAndOverflow()
         return
 
     def __tuneHyperParameter(self):
