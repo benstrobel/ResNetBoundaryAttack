@@ -40,9 +40,6 @@ forkLiftPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\forklift
 sealionList = os.listdir(sealionPath)
 forkLiftList = os.listdir(forkLiftPath)
 
-sealionImg = image.imread(sealionPath + sealionList[random.randrange(0, len(sealionList))])
-forkLiftImg = image.imread(forkLiftPath + forkLiftList[random.randrange(0, len(forkLiftList))])
-
 below_convergence_limit_counter = 0
 convergence_limit = 0.001
 
@@ -76,7 +73,7 @@ class AttackInstance:
             self.lastStep = self.boundaryAttack.getCurrentStep()
             self.lastStepTime = datetime.datetime.now()
         if (datetime.datetime.now() - self.lastStepTime).total_seconds() > 90:
-            abort = True
+            self.abort = True
         self.distance_list.append(self.boundaryAttack.getCurrentDist())
         self.alpha_list.append(self.boundaryAttack.getCurrentAlpha())
         self.beta_list.append(self.boundaryAttack.getCurrentBeta())
@@ -105,8 +102,20 @@ class AttackInstance:
         pyplot.show()
 
 
-attackInstance = AttackInstance(sealionImg, forkLiftImg)
-while attackInstance.boundaryAttack.getCurrentStep() < 400 and below_convergence_limit_counter < 5 \
-        and not attackInstance.abort:
-    attackInstance.step()
-attackInstance.finish()
+sealionImg = image.imread(sealionPath + sealionList[random.randrange(0, len(sealionList))])
+
+forkLiftImgList = []
+intanceList = []
+instances =5
+
+for x in range[instances]:
+    forkLiftImgList.append(image.imread(forkLiftPath + forkLiftList[random.randrange(0, len(forkLiftList))]))
+
+for x in range[instances]:
+    intanceList.append(AttackInstance(sealionImg, forkLiftImgList[x]))
+
+currentInstance = intanceList[0]
+while currentInstance.boundaryAttack.getCurrentStep() < 400 and below_convergence_limit_counter < 5 \
+        and not currentInstance.abort:
+    currentInstance.step()
+currentInstance.finish()
