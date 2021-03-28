@@ -59,12 +59,19 @@ convergence_limit = 0.001
 render_as_image(preprocessed[0]*std + mean)
 render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
 
-while boundaryAttack.getCurrentStep() < 500 and below_convergence_limit_counter < 5:
+distance_list = []
+
+while boundaryAttack.getCurrentStep() < 1000 and below_convergence_limit_counter < 5:
     boundaryAttack.step()
+    distance_list.append(boundaryAttack.getCurrentDist())
     if boundaryAttack.getCurrentAlpja() < convergence_limit:
         below_convergence_limit_counter = below_convergence_limit_counter + 1
     else:
         below_convergence_limit_counter = 0
 
 render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
-print("Finished Adversarial Sample within " + boundaryAttack.stepCounter + " Steps and " + resnet.forward_counter + " Forward Passes.")
+print("Finished Adversarial Sample within " + str(boundaryAttack.stepCounter) + " Steps and " + str(resnet.forward_counter) + " Forward Passes.")
+pyplot.plot(distance_list)
+pyplot.ylabel("L2-Distance")
+pyplot.xlabel("Step")
+pyplot.show()

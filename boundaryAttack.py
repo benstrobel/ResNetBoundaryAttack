@@ -152,3 +152,6 @@ class BoundaryAttack:
 
     def getCurrentAlpja(self):
         return self.alpha
+
+    def getCurrentDist(self):
+        return dist(self.delta)
