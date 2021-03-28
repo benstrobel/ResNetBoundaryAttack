@@ -7,6 +7,7 @@ from matplotlib import pyplot
 import os
 import random
 import numpy as np
+import datetime
 
 def render_as_image(a):
     img = a.asnumpy() # convert to numpy array
@@ -66,9 +67,17 @@ render_as_image((preprocessed+boundaryAttack.getCurrentDelta())[0]*std + mean)
 distance_list = []
 alpha_list = []
 beta_list = []
+lastStep = None
+lastStepTime = None
+abort = False
 
-while boundaryAttack.getCurrentStep() < 400 and below_convergence_limit_counter < 5:
+while boundaryAttack.getCurrentStep() < 400 and below_convergence_limit_counter < 5 and not abort:
     boundaryAttack.step()
+    if lastStep == None or lastStep < boundaryAttack.getCurrentStep():
+        lastStep = boundaryAttack.getCurrentStep()
+        lastStepTime = datetime.datetime.now()
+    if (datetime.datetime.now() - lastStepTime).total_seconds() > 90:
+        abort = True
     distance_list.append(boundaryAttack.getCurrentDist())
     alpha_list.append(boundaryAttack.getCurrentAlpha())
     beta_list.append(boundaryAttack.getCurrentBeta())

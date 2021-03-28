@@ -4,5 +4,5 @@ The Model and the ImageNet are not commited / uploaded to this repository becaus
 
 You may download the Model and ImageNet data using the following Links:
 
-ONXX Model: https://github.com/onnx/onnx
+ONXX Model: https://github.com/onnx/models
 ImageNet Data: http://www.image-net.org/index

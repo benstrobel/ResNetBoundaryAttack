@@ -1,5 +1,6 @@
 import numpy as np
 import mxnet as mx
+import datetime
 
 
 def crossProduct(ndarray0, ndarray1):
@@ -67,6 +68,7 @@ class BoundaryAttack:
             secondStepSuc = self.criteriaFct()
             if not secondStepSuc:
                 self.delta = previousDelta
+                new_distance = distance
         else:
             firstStepSuc = False
             self.delta = previousDelta
@@ -75,17 +77,22 @@ class BoundaryAttack:
         if secondStepSuc is not None:
             self.secondStepSuccess.append(secondStepSuc)
         self.__tuneHyperParameter()
-        print("Step " + str('{:<3}'.format(self.stepCounter)) + " complete (" + str(firstStepSuc)[0] + ","
-              + str(secondStepSuc)[0] + ") Alpha: " + str('{:<25}'.format(self.alpha)) + " Beta: "
-              + str('{:<25}'.format(self.beta)) + " 1stSuccProb: "
+
+        print(str(datetime.datetime.now()) + " Step " + str('{:<3}'.format(self.stepCounter)) + " complete (" +
+              str(firstStepSuc)[0] + "," + str(secondStepSuc)[0] + ") Alpha: " + str('{:<25}'.format(self.alpha))
+              + " Beta: " + str('{:<25}'.format(self.beta)) + " 1stSuccProb: "
               + str('{:<4}'.format(self.successProbabilityAfterStep1*100)) + "% 2ndSuccProb: "
               + str('{:<4}'.format(self.successProbabilityAfterStep2*100)) + "% L2Distance: " + str(new_distance))
         self.stepCounter = self.stepCounter+1
         return
 
     def __firstPartStep(self):
+
+        # This does not calculate the orthogonal perturbation
         random_array = mx.ndarray.random.uniform(-1, 1, self.orig_img.shape)
-        orth_perturbation = normalize(crossProduct(random_array, self.delta))
+        orth_perturbation = normalize(random_array)
+        #
+
         first_step = orth_perturbation * self.alpha * np.random.normal()
         self.delta = self.delta + first_step
         #self.cutUnderAndOverflow()
