@@ -1,6 +1,7 @@
 import numpy as np
 import mxnet as mx
 import datetime
+import random
 
 
 def crossProduct(ndarray0, ndarray1):
@@ -13,6 +14,15 @@ def normalize(ndarray):
 def dist(ndarray):
     return mx.nd.norm(ndarray).asnumpy()[0]
 
+def orth_step(ndarray):
+    rgb_rnd_index = random.randint(0,2)
+    x_rnd_index = random.randint(0,223)
+    y_rnd_index = random.randint(0,223)
+    delta_value = ndarray.asnumpy()[0][rgb_rnd_index][x_rnd_index][y_rnd_index]
+    sum = np.sum(ndarray.asnumpy()) - delta_value
+    orth_step = mx.nd.full(ndarray.shape, 1)
+    orth_step[0][rgb_rnd_index][x_rnd_index][y_rnd_index] = sum / delta_value
+    return orth_step
 
 class BoundaryAttack:
 
@@ -87,12 +97,8 @@ class BoundaryAttack:
         return
 
     def __firstPartStep(self):
-
-        # This does not calculate the orthogonal perturbation
-        random_array = mx.ndarray.random.uniform(-1, 1, self.orig_img.shape)
+        random_array = orth_step(self.delta)
         orth_perturbation = normalize(random_array)
-        #
-
         first_step = orth_perturbation * self.alpha * np.random.normal()
         self.delta = self.delta + first_step
         #self.cutUnderAndOverflow()

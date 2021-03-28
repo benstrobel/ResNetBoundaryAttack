@@ -4,6 +4,7 @@ from boundaryAttack import BoundaryAttack
 import mxnet as mx
 from matplotlib import image
 from matplotlib import pyplot
+from PIL import Image
 import os
 import random
 import numpy as np
@@ -18,7 +19,14 @@ def render_as_image(a):
 
     pyplot.imshow(img)
     pyplot.show()
+    return img
 
+def save_image(name, date, img):
+    pyplot.imsave(os.getcwd() + "\\Result\\" + date.strftime("%Y%m%d%H%M%S") + "\\" + name + ".png", img,
+                  format="png")
+
+def save_figure(name, date):
+    pyplot.savefig(os.getcwd() + "\\Result\\" + date.strftime("%Y%m%d%H%M%S") + "\\" + name + ".png")
 
 # Setting Mean And Std Array
 mean_r = mx.nd.full((1, 224, 224), 0.485)
@@ -58,13 +66,16 @@ class AttackInstance:
             print("Target Class: " + str(self.boundaryAttack.target_class) + " " + labelDict[
                 self.boundaryAttack.target_class])
         render_as_image(self.origin_preprocessed[0] * std + mean)
-        render_as_image((self.origin_preprocessed + self.boundaryAttack.getCurrentDelta())[0] * std + mean)
+        img = render_as_image((self.origin_preprocessed + self.boundaryAttack.getCurrentDelta())[0] * std + mean)
         self.distance_list = []
         self.alpha_list = []
         self.beta_list = []
         self.lastStep = None
         self.lastStepTime = None
         self.abort = False
+        self.date = datetime.datetime.now()
+        os.mkdir(os.getcwd()+"\\Result\\" + self.date.strftime("%Y%m%d%H%M%S"))
+        save_image("start", self.date, img)
         return
 
     def step(self):
@@ -83,39 +94,43 @@ class AttackInstance:
             self.below_convergence_limit_counter = 0
 
     def finish(self):
-        render_as_image((self.origin_preprocessed + self.boundaryAttack.getCurrentDelta())[0] * std + mean)
+        img = render_as_image((self.origin_preprocessed + self.boundaryAttack.getCurrentDelta())[0] * std + mean)
+
         print("Finished Adversarial Sample within " + str(self.boundaryAttack.stepCounter) + " Steps and "
               + str(self.resnet.forward_counter) + " Forward Passes.")
         pyplot.plot(self.distance_list)
         pyplot.ylabel("L2-Distance")
         pyplot.xlabel("Step")
         pyplot.show()
+        save_figure("distance", self.date)
 
         pyplot.plot(self.alpha_list)
         pyplot.ylabel("Alpha")
         pyplot.xlabel("Step")
         pyplot.show()
+        save_figure("alpha", self.date)
 
         pyplot.plot(self.beta_list)
         pyplot.ylabel("Beta")
         pyplot.xlabel("Step")
         pyplot.show()
+        save_figure("beta", self.date)
 
 
 sealionImg = image.imread(sealionPath + sealionList[random.randrange(0, len(sealionList))])
 
 forkLiftImgList = []
 intanceList = []
-instances =5
+instances = 1
 
-for x in range[instances]:
+for x in range(instances):
     forkLiftImgList.append(image.imread(forkLiftPath + forkLiftList[random.randrange(0, len(forkLiftList))]))
 
-for x in range[instances]:
+for x in range(instances):
     intanceList.append(AttackInstance(sealionImg, forkLiftImgList[x]))
 
 currentInstance = intanceList[0]
-while currentInstance.boundaryAttack.getCurrentStep() < 400 and below_convergence_limit_counter < 5 \
+while currentInstance.boundaryAttack.getCurrentStep() < 10000 and below_convergence_limit_counter < 5 \
         and not currentInstance.abort:
     currentInstance.step()
 currentInstance.finish()
