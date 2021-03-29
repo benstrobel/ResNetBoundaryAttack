@@ -1,3 +1,5 @@
 Random: Finished Adversarial Sample within 400 Steps and 974 Forward Passes.
 0orth:	Finished Adversarial Sample within 400 Steps and 889 Forward Passes.
-20210329015354: Finished Adversarial Sample within 5000 Steps and 13532 Forward Passes
+20210329015354: Finished Adversarial Sample within 5000 Steps and 13532 Forward Passes (Untargeted)
+20210329121100: Finished Adversarial Sample within 5000 Steps and 10744 Forward Passes (Untargeted)
+20210329135331: Finished Adversarial Sample within 5000 Steps and 10314 Forward Passes (Targeted)

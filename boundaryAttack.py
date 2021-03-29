@@ -34,6 +34,9 @@ class BoundaryAttack:
         self.successProbabilityAfterStep1 = -1
         self.successProbabilityAfterStep2 = -1
         self.stepCounter = 0
+        self.firstSuccCount = 0
+        self.secondSuccCount = 0
+        self.bothSuccCount = 0
         if original_img is not None and target_img is None and evaluate is not None:        # Untargeted Mode
             print("Untargeted Mode")
             self.orig_img = original_img
@@ -134,6 +137,7 @@ class BoundaryAttack:
         self.successProbabilityAfterStep1 = self.firstStepSuccess.count(True) / len(self.firstStepSuccess)
 
         if firstStepSuccChanged:
+            self.firstSuccCount = self.firstSuccCount + 1
             # Restricting by how much alpha can change within one adjustment
             successProbabilityAfterStep1 = min(max(self.successProbabilityAfterStep1,0.35),0.65)
             self.alpha = self.alpha * (successProbabilityAfterStep1 / 0.5)
@@ -141,9 +145,13 @@ class BoundaryAttack:
         self.successProbabilityAfterStep2 = self.secondStepSuccess.count(True) / len(self.firstStepSuccess)
 
         if secondStepSuccChanged:
+            self.secondSuccCount = self.secondSuccCount + 1
             # Restricting by how much beta can change within one adjustment
             successProbabilityAfterStep2 = min(max(self.successProbabilityAfterStep2,0.35),0.65)
             self.beta = self.beta * (successProbabilityAfterStep2 / 0.5)
+
+        if firstStepSuccChanged and secondStepSuccChanged:
+            self.bothSuccCount = self.bothSuccCount + 1
 
         return
 
