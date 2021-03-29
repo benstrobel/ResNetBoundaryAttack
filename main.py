@@ -83,11 +83,11 @@ class AttackInstance:
         if self.lastStep == None or self.lastStep < self.boundaryAttack.getCurrentStep():
             self.lastStep = self.boundaryAttack.getCurrentStep()
             self.lastStepTime = datetime.datetime.now()
+            self.distance_list.append(self.boundaryAttack.getCurrentDist())
+            self.alpha_list.append(self.boundaryAttack.getCurrentAlpha())
+            self.beta_list.append(self.boundaryAttack.getCurrentBeta())
         if (datetime.datetime.now() - self.lastStepTime).total_seconds() > 90:
             self.abort = True
-        self.distance_list.append(self.boundaryAttack.getCurrentDist())
-        self.alpha_list.append(self.boundaryAttack.getCurrentAlpha())
-        self.beta_list.append(self.boundaryAttack.getCurrentBeta())
         if self.boundaryAttack.getCurrentAlpha() < convergence_limit:
             self.below_convergence_limit_counter = self.below_convergence_limit_counter + 1
         else:
@@ -101,20 +101,22 @@ class AttackInstance:
         pyplot.plot(self.distance_list)
         pyplot.ylabel("L2-Distance")
         pyplot.xlabel("Step")
-        pyplot.show()
         save_figure("distance", self.date)
+        pyplot.show()
 
         pyplot.plot(self.alpha_list)
         pyplot.ylabel("Alpha")
         pyplot.xlabel("Step")
-        pyplot.show()
         save_figure("alpha", self.date)
+        pyplot.show()
 
         pyplot.plot(self.beta_list)
         pyplot.ylabel("Beta")
         pyplot.xlabel("Step")
-        pyplot.show()
         save_figure("beta", self.date)
+        pyplot.show()
+
+        save_image("result", self.date, img)
 
 
 sealionImg = image.imread(sealionPath + sealionList[random.randrange(0, len(sealionList))])
@@ -130,7 +132,7 @@ for x in range(instances):
     intanceList.append(AttackInstance(sealionImg, forkLiftImgList[x]))
 
 currentInstance = intanceList[0]
-while currentInstance.boundaryAttack.getCurrentStep() < 10000 and below_convergence_limit_counter < 5 \
+while currentInstance.boundaryAttack.getCurrentStep() < 5000 and below_convergence_limit_counter < 5 \
         and not currentInstance.abort:
     currentInstance.step()
 currentInstance.finish()
