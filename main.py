@@ -157,7 +157,7 @@ for x in range(instances):
     forkLiftImgList.append(image.imread(forkLiftPath + forkLiftList[random.randrange(0, len(forkLiftList))]))
 
 for x in range(instances):
-    instanceList.append(AttackInstance(sealionImg, forkLiftImgList[x]))
+    instanceList.append(AttackInstance(sealionImg, None))
 
 currentInstance = getInstanceWithLowestDist(instanceList)
 
@@ -186,4 +186,11 @@ pyplot.plot(stepList)
 pyplot.ylabel("Index der Aktuellen Instanz")
 pyplot.xlabel("Step")
 save_figure("index", currentInstance.date)
+pyplot.show()
+
+for x in instanceList:
+    pyplot.plot(x.distance_list)
+pyplot.ylabel("L2-Distance")
+pyplot.xlabel("Step")
+save_figure("distance-all", currentInstance.date)
 pyplot.show()
