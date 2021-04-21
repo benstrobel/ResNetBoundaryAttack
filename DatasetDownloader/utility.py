@@ -619,7 +619,7 @@ class Utils:
                 shutil.unpack_archive(annotated_file, folder_path)
             except:
                 print("Error while extracting annotation from tar file")
-                sys.exit()
+                continue
             files = glob.glob(os.path.join(folder_path, "Annotation", code)+"/*xml")
             for f in files:
                 _, xml_name = os.path.split(f)
