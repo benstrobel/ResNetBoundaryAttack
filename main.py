@@ -1,3 +1,7 @@
+# Mit mehr Instanzen loopen -> Nur bis 200 Schritte testen
+# Alle Parameter in ne config rein
+# Bei vielen Ausführungen messbare Ergebnisse
+
 from resnetWrapper import ResNet
 from imageNetLabelDict import labelDict
 from boundaryAttack import BoundaryAttack
@@ -72,14 +76,12 @@ std = mx.nd.concat(std_r, std_g, std_b, dim=0)
 # For Reproducibility
 random.seed(1337)
 
-sealionPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\sealion\\Images\\"
-forkLiftPath = "D:\\Dataset\\part-of-imagenet-master\\partial_imagenet\\forklift\\Images\\"
-
-sealionList = os.listdir(sealionPath)
-forkLiftList = os.listdir(forkLiftPath)
+pathToCategories = "F:\\DatasetDownloader\\partial_imagenet\\"
+categoryList = os.listdir(pathToCategories)
 
 below_convergence_limit_counter = 0
 convergence_limit = 0.001
+abort_after_step = 200
 
 
 class AttackInstance:
@@ -147,50 +149,79 @@ class AttackInstance:
 
         save_image("result", self.date, img)
 
-sealionImg = image.imread(sealionPath + sealionList[random.randrange(0, len(sealionList))])
+class Runner:
+    def __init__(self):
+        sourceCategoryIndex = random.randrange(0, len(categoryList))
+        targetCategoryIndex = None
+        while(targetCategoryIndex == None):
+            index = random.randrange(0, len(categoryList))
+            if index != sourceCategoryIndex:
+                targetCategoryIndex = index
 
-forkLiftImgList = []
-instanceList = []
-instances = 4
+        sourcePath = pathToCategories + categoryList[sourceCategoryIndex] + "\\Images\\"
+        targetPath = pathToCategories + categoryList[targetCategoryIndex] + "\\Images\\"
 
-for x in range(instances):
-    forkLiftImgList.append(image.imread(forkLiftPath + forkLiftList[random.randrange(0, len(forkLiftList))]))
+        soruceImageList = os.listdir(sourcePath)
+        targetImageList = os.listdir(targetPath)
 
-for x in range(instances):
-    instanceList.append(AttackInstance(sealionImg, None))
+        sourceImage = image.imread(sourcePath + soruceImageList[random.randrange(0, len(soruceImageList))])
 
-currentInstance = getInstanceWithLowestDist(instanceList)
+        targetImage = []
+        self.instanceList = []
+        self.instances = 4
 
-total_steps = 0
-stepList = []
+        for x in range(self.instances):
+            targetImage.append(image.imread(targetPath + targetImageList[random.randrange(0, len(targetImageList))]))
 
-while total_steps < 1000 and below_convergence_limit_counter < 5:
-    cur = currentInstance
-    if total_steps % (25 * instances) == 0:
-        print("Performing " + str(2*instances) + " Steps for every Instance")
-        for x in instanceList:
-            for i in range(2*instances):
-                curStep = x.lastStep
-                while curStep == x.lastStep:
-                    x.step()
-                    stepList.append(instanceList.index(x))
-        currentInstance = getInstanceWithLowestDist(instanceList)
-    if cur != currentInstance:
-        print("Swapped Instance " + str(instanceList.index(cur)) + " -> " + str(instanceList.index(currentInstance)))
-    currentInstance.step()
-    stepList.append(instanceList.index(currentInstance))
-    total_steps = total_steps + 1
-currentInstance.finish()
+        for x in range(self.instances):
+            self.instanceList.append(AttackInstance(sourceImage, targetImage[x]))
 
-pyplot.plot(stepList)
-pyplot.ylabel("Index der Aktuellen Instanz")
-pyplot.xlabel("Step")
-save_figure("index", currentInstance.date)
-pyplot.show()
+        self.currentInstance = getInstanceWithLowestDist(self.instanceList)
 
-for x in instanceList:
-    pyplot.plot(x.distance_list)
-pyplot.ylabel("L2-Distance")
-pyplot.xlabel("Step")
-save_figure("distance-all", currentInstance.date)
-pyplot.show()
+
+    def run_scheuduled(self):
+        self.total_steps = 0
+        self.stepList = []
+        while self.total_steps <= abort_after_step and below_convergence_limit_counter < 5:
+            cur = self.currentInstance
+            if self.total_steps % (25 * self.instances) == 0:
+                print("Performing " + str(2*self.instances) + " Steps for every Instance")
+                for x in self.instanceList:
+                    for i in range(2*self.instances):
+                        curStep = x.lastStep
+                        while curStep == x.lastStep:
+                            x.step()
+                            self.stepList.append(self.instanceList.index(x))
+                self.currentInstance = getInstanceWithLowestDist(self.instanceList)
+            if cur != self.currentInstance:
+                print("Swapped Instance " + str(self.instanceList.index(cur)) + " -> " + str(self.instanceList.index(self.currentInstance)))
+            self.currentInstance.step()
+            self.stepList.append(self.instanceList.index(self.currentInstance))
+            self.total_steps = self.total_steps + 1
+        self.currentInstance.finish()
+
+        self.showAndSaveResults()
+
+    def run_unscheuduled(self):
+        self.current_steps = 0
+        for instance in self.instanceList:
+            print("Starting with next instance")
+            while self.current_steps <= abort_after_step:
+                instance.step()
+            self.current_steps = 0
+
+        self.showAndSaveResults()
+
+    def showAndSaveResults(self):
+        for x in self.instanceList:
+            pyplot.plot(x.distance_list)
+        pyplot.ylabel("L2-Distance")
+        pyplot.xlabel("Step")
+        save_figure("distance-all", self.currentInstance.date)
+        pyplot.show()
+
+
+runner = Runner()
+runner.run_unscheuduled()
+runner.run_scheuduled()
+
